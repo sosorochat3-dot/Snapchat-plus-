@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Démo interactive — Offre fictive</title>
+<style>
+  :root { color-scheme: dark; --green:#39ff78; --yellow:#fffc00; --bg:#050807; }
+  * { box-sizing:border-box }
+  body { margin:0; min-height:100vh; background:#fff; color:#171717; font-family:Arial,Helvetica,sans-serif; }
+  button { border:0; border-radius:999px; padding:15px 22px; font-weight:800; font-size:16px; cursor:pointer; }
+  button:focus-visible { outline:3px solid #4b9cff; outline-offset:3px }
+  .page { min-height:100vh; display:grid; place-items:center; padding:24px; }
+  .offer { width:min(440px,100%); text-align:center; }
+  .ghost { width:58px;height:58px;border-radius:18px;background:var(--yellow);display:grid;place-items:center;margin:0 auto 22px;font-size:32px;color:#111;font-weight:900 }
+  h1 { font-size:clamp(27px,6vw,36px); margin:0 0 14px; letter-spacing:-1px }
+  p { color:#555; line-height:1.5; }
+  .primary { background:#111;color:white;width:100%;margin-top:18px; }
+  .secondary { background:#e9e9e9;color:#111;width:100%;margin-top:10px; }
+  .notice { font-size:12px;color:#777;margin-top:22px }
+  .hidden { display:none!important }
+  #verify { background:#f7f7f7; }
+  .verify-card { width:min(440px,100%);background:white;border-radius:24px;padding:26px;box-shadow:0 12px 45px #0001;text-align:center; }
+  .camera-icon { font-size:42px;margin:12px }
+  .small { font-size:13px;color:#666 }
+  #cameraScreen { background:#050807;color:white; }
+  .camera-wrap { width:min(440px,100%);text-align:center }
+  video { display:block;width:100%;max-height:62vh;object-fit:cover;transform:scaleX(-1);border-radius:22px;background:#111;border:1px solid #555 }
+  .camera-label { color:var(--green);font:13px monospace;margin:15px 0 }
+  #hacker { background:radial-gradient(ellipse at center,#092014 0%,#020403 72%);color:var(--green);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow:hidden; }
+  .terminal { width:min(760px,100%);border:1px solid #1b8d48;background:#020805eF;box-shadow:0 0 35px #00ff5530;padding:20px;border-radius:12px;position:relative;z-index:2; }
+  .term-head { display:flex;justify-content:space-between;border-bottom:1px solid #176333;padding-bottom:12px;margin-bottom:14px;font-size:12px }
+  #log { height:42vh;min-height:260px;overflow:hidden;line-height:1.55;font-size:clamp(11px,2.5vw,14px);white-space:pre-wrap; }
+  .warn { color:#ff5656;text-shadow:0 0 9px #f00 }
+  .bar { height:9px;background:#12351f;border-radius:9px;overflow:hidden;margin:15px 0 }
+  .bar span { display:block;height:100%;width:0;background:var(--green);transition:width .3s }
+  .danger { color:#ff6262 }
+  .end { color:#fff;text-align:center;margin-top:18px;font:13px Arial,sans-serif }
+  .glitch { animation:glitch .16s steps(2) 8; }
+  @keyframes glitch { 0%{transform:translate(0)} 25%{transform:translate(4px,-2px) skewX(2deg);filter:hue-rotate(80deg)} 50%{transform:translate(-4px,2px);filter:contrast(2)} 75%{transform:translate(2px,1px) skewX(-2deg)} 100%{transform:translate(0)} }
+  .scanline { position:fixed;inset:0;pointer-events:none;z-index:3;background:repeating-linear-gradient(transparent 0 3px,#00ff7809 4px 5px); }
+  .controls { display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px }
+  .controls button { width:auto;min-width:145px; }
+  .sound { background:#12351f;color:#baffca;border:1px solid #39ff78 }
+  .stop { background:#222;color:white;border:1px solid #777 }
+</style>
+</head>
+<body>
+<main id="offer" class="page">
+  <section class="offer">
+    <div class="ghost" aria-hidden="true">+</div>
+    <p style="font-weight:800;color:#222">OFFRE SPÉCIALE — DÉMONSTRATION FICTIVE</p>
+    <h1>Voulez-vous profiter de Snapchat+ gratuitement pendant 7 jours&nbsp;?</h1>
+    <p>Découvrez cette maquette interactive inspirée des écrans d'offres d'abonnement.</p>
+    <button class="primary" id="accept">Profiter de mon essai gratuit</button>
+    <p class="notice">Démo non officielle. Aucun abonnement ne sera activé.</p>
+  </section>
+</main>
+
+<section id="verify" class="page hidden">
+  <div class="verify-card">
+    <div class="camera-icon">◎</div>
+    <h1>Une dernière étape est nécessaire pour activer votre essai gratuit.</h1>
+    <p>La caméra avant sera utilisée uniquement pour afficher votre reflet en miroir dans cette page. Aucune image n'est enregistrée ni envoyée.</p>
+    <button class="primary" id="verifyBtn">Vérifier mon compte</button>
+    <button class="secondary" id="skipCamera">Continuer sans caméra</button>
+    <p class="small">Maquette de démonstration — cette page n'est pas un service Snapchat.</p>
+  </div>
+</section>
+
+<section id="cameraScreen" class="page hidden">
+  <div class="camera-wrap">
+    <h1 style="font-size:25px">Vérification visuelle</h1>
+    <video id="video" autoplay playsinline muted></video>
+    <div class="camera-label">APERÇU LOCAL · EFFET MIROIR</div>
+    <p class="small" style="color:#bbb">Votre caméra reste dans votre navigateur. Vous pouvez l'arrêter à tout moment.</p>
+    <button class="primary" id="continueBtn">Continuer</button>
+    <button class="secondary" id="stopCamera">Arrêter la caméra</button>
+  </div>
+</section>
+
+<section id="hacker" class="page hidden">
+  <div class="scanline"></div>
+  <div class="terminal" id="terminal">
+    <div class="term-head"><span>SIMULATION_TERMINAL // LOCAL</span><span id="clock">00:00:00</span></div>
+    <div id="log" aria-live="polite"></div>
+    <div class="bar"><span id="progress"></span></div>
+    <div id="status" class="warn">ANALYSE DE DÉMONSTRATION EN COURS…</div>
+    <div class="end">Simulation visuelle uniquement — aucune action système réelle.</div>
+    <div class="controls">
+      <button class="sound" id="soundBtn">Activer les bips</button>
+      <button class="stop" id="closeDemo">Fermer la démonstration</button>
+    </div>
+  </div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+function show(id) {
+  ['offer','verify','cameraScreen','hacker'].forEach(x => $(x).classList.toggle('hidden', x !== id));
+}
+let stream = null, audioCtx = null, beepTimer = null, sequenceTimer = null, started = false;
+$('accept').addEventListener('click', () => show('verify'));
+
+async function startCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    alert("La caméra n'est pas disponible dans ce navigateur. Ouvre cette page via HTTPS ou localhost.");
+    return false;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    $('video').srcObject = stream;
+    show('cameraScreen');
+    return true;
+  } catch (e) {
+    alert("Accès caméra refusé ou indisponible. Tu peux continuer sans caméra.");
+    return false;
+  }
+}
+$('verifyBtn').addEventListener('click', startCamera);
+$('skipCamera').addEventListener('click', beginGlitch);
+$('continueBtn').addEventListener('click', beginGlitch);
+$('stopCamera').addEventListener('click', () => { stopCamera(); beginGlitch(); });
+
+function stopCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; $('video').srcObject = null;
+}
+function beginGlitch() {
+  stopCamera();
+  show('hacker');
+  if (started) return;
+  started = true;
+  $('terminal').classList.add('glitch');
+  setTimeout(() => $('terminal').classList.remove('glitch'), 1500);
+  const lines = [
+    '[BOOT] Initialisation de la démonstration…',
+    '[INFO] Chargement des modules visuels : OK',
+    '[SCAN] Vérification des pixels de l’interface…',
+    '[WARN] Anomalie graphique simulée détectée',
+    '[NET] Adresse de test : 192.0.2.42',
+    '[NET] Région de démonstration : Suisse (CH)',
+    '[SYS] Analyse fictive des secteurs mémoire…',
+    '[ALERT] VIRUS DÉTECTÉ — SIMULATION',
+    '[PROC] Isolement virtuel des éléments…',
+    '[SYS] Préparation de la séquence de redémarrage fictive…',
+    '[DONE] Démonstration terminée. Aucun fichier ni réglage modifié.'
+  ];
+  let i=0, pct=0;
+  function addLine() {
+    if (i >= lines.length) {
+      $('status').textContent = 'SIMULATION TERMINÉE — AUCUNE MENACE RÉELLE';
+      $('status').className = 'danger';
+      $('progress').style.width = '100%';
+      return;
+    }
+    const line = document.createElement('div');
+    line.textContent = lines[i];
+    if (lines[i].includes('WARN') || lines[i].includes('ALERT')) line.className = 'warn';
+    $('log').appendChild(line);
+    $('log').scrollTop = $('log').scrollHeight;
+    i++; pct = Math.round(i / lines.length * 100);
+    $('progress').style.width = pct + '%';
+    if (i === 3 || i === 7) {
+      $('terminal').classList.add('glitch');
+      setTimeout(() => $('terminal').classList.remove('glitch'), 1300);
+    }
+    sequenceTimer = setTimeout(addLine, i < 5 ? 1100 : 1450);
+  }
+  sequenceTimer = setTimeout(addLine, 18000); // pause dramatique de 18 secondes
+  const updateClock = () => $('clock').textContent = new Date().toLocaleTimeString('fr-CH');
+  updateClock(); setInterval(updateClock,1000);
+}
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = 'square'; osc.frequency.value = 880;
+    gain.gain.setValueAtTime(.0001,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.07,audioCtx.currentTime+.015);
+    gain.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.12);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime+.13);
+  } catch(e) {}
+}
+$('soundBtn').addEventListener('click', async () => {
+  if (beepTimer) { clearInterval(beepTimer); beepTimer=null; $('soundBtn').textContent='Activer les bips'; return; }
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  beep(); beepTimer=setInterval(beep,1150); $('soundBtn').textContent='Désactiver les bips';
+});
+$('closeDemo').addEventListener('click', () => {
+  stopCamera(); clearTimeout(sequenceTimer); if(beepTimer) clearInterval(beepTimer);
+  if(audioCtx) audioCtx.close();
+  location.reload();
+});
+window.addEventListener('pagehide', stopCamera);
+</script>
+</body>
+</html>
